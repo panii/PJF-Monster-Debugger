@@ -1,0 +1,322 @@
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<title>PJF Monster Debugger(A JSON Trace Tool)</title>
+	<script type="text/javascript" src="adobe/AIRAliases.js"></script>
+	<!--<script type="text/javascript" src="adobe/AIRIntrospector.js"></script>-->
+	<script type="text/javascript" src="app/main.js"></script>
+	<script type="text/javascript" src="app/socketServer.js"></script>
+	<script type="text/javascript" src="app/socketClient.js"></script>
+	<script type="text/javascript">var find2Selector = ['td.label'];var find2from;</script>
+	<script type="text/javascript" src="app/find2.js"></script>
+	<link rel="stylesheet" href="app/main.css" />
+	<script type="text/javascript">
+	var state = {
+		'selfX' : 20, 'selfY' : 20, 'selfWidth' : 800, 'selfHeight' : 600,
+		'dumpWinX' : 20, 'dumpWinY' : 20, 'dumpWinWidth' : 320, 'dumpWinHeight' : 320,
+		'postUrl' : '', 'postRaw' : ''
+	}
+	var stateFile = 'pjfmonsterdebuggerstatefile';
+	
+	if(air.Loader)
+	{
+		var lo = new air.Loader();
+		lo.contentLoaderInfo.addEventListener(air.Event.COMPLETE, trayLoadComplete);
+		lo.load(new air.URLRequest("app/icon/1_Desktop_Icons/icon_016.png"));
+	}
+	function trayLoadComplete(e) {
+		var _icon = new window.runtime.Array(e.target.content.bitmapData);
+		air.NativeApplication.nativeApplication.icon.bitmaps = _icon;
+		air.NativeApplication.nativeApplication.icon.tooltip = "PJF Monster Debugger";
+		air.NativeApplication.nativeApplication.icon.addEventListener('click', function(e) {
+			air.NativeApplication.nativeApplication.activate(nativeWindow);
+			window.nativeWindow.visible = true;
+			window.nativeWindow.activate();
+		}, false);
+		var iconMenu = new air.NativeMenu();
+		var exitCommand = iconMenu.addItem(new air.NativeMenuItem("Exit"));
+		exitCommand.addEventListener(air.Event.SELECT, function(){ air.NativeApplication.nativeApplication.exit(); });
+		air.NativeApplication.nativeApplication.icon.menu = iconMenu;
+	}
+	
+	function readState() {
+		if(!air.File) return window.state || {};
+		var stateFile = air.File.applicationStorageDirectory.resolvePath(window.stateFile);
+		if(!stateFile.exists){
+			return window.state || {};
+		}
+		
+		var stream = new air.FileStream();
+		stream.open(stateFile, air.FileMode.READ);
+		
+		var stateData = stream.readObject();
+		stream.close();
+		
+		return stateData || window.state || {};
+	}
+	
+	function saveState() {
+		var stateFile = air.File.applicationStorageDirectory.resolvePath(window.stateFile);
+		var stream = new air.FileStream();
+		stream.open(stateFile, air.FileMode.WRITE);
+		stream.writeObject(window.state);
+		stream.close();
+	}
+	
+	var openedWin = {};
+	function dumpF(g, labelIndex, jsonIndex, tagIndex, what, showType) { //                    潘
+		var k = labelIndex + '-' + jsonIndex + '-' + tagIndex;
+		if(typeof openedWin[k] == 'undefined') {
+			var options = new air.NativeWindowInitOptions();
+			//options.systemChrome = this.chrome;
+			//options.type = this.type;
+			//options.resizable = this.resizable;
+			//options.minimizable = this.minimizable;
+			//options.maximizable = this.maximizable;
+			//options.transparent = this.transparent;
+			var windowBounds = new air.Rectangle(window.state['dumpWinX'],window.state['dumpWinY'],window.state['dumpWinWidth'],window.state['dumpWinHeight']);
+			var loader = air.HTMLLoader.createRootWindow(true, options, true, windowBounds);
+			loader.load(new air.URLRequest('app/dump.html'));
+			loader.addEventListener('complete', function(e) {
+				if(loader && loader.window && loader.window.dumpF) {
+					if(g) loader.window.opener = this;
+					loader.window.dumpF(what, showType);
+				}
+			});
+			openedWin[k] = loader.window.nativeWindow;
+		} else {
+			if(openedWin[k].closed) {delete openedWin[k]; dumpF(g, labelIndex, jsonIndex, tagIndex, what, showType); return; }
+			openedWin[k].visible = true;
+			window.openedWin[k].activate();
+		}
+	}
+	function setDumpWindowState(x,y,w,h) {window.state['dumpWinX'] = x;window.state['dumpWinY'] = y;window.state['dumpWinWidth'] = w;window.state['dumpWinHeight'] = h;saveState();}
+	function setSelfState(x,y,w,h) {window.state['selfX'] = x;window.state['selfY'] = y;window.state['selfWidth'] = w;window.state['selfHeight'] = h;saveState();}
+
+	window.onload = function() {
+		find2from = document.getElementById('jtbox');
+	
+		window.jsonsTable = document.getElementById('jsonsTable');
+		window.jsonsTable.addEventListener('dblclick', jsonsTableDblClick, false);
+		window.jsonsTable.addEventListener('click', jsonsTableClick, false);
+		
+		document.getElementById('postBtn').addEventListener('click', postBtnClick, false);
+		
+		window.state = readState();
+		if(air.Screen && air.Screen.mainScreen) {
+			var x = window.state['selfX'];
+			var y = window.state['selfY'];
+			var b = air.Screen.mainScreen.visibleBounds;
+			var xb = (typeof x == 'undefined')?false:true;
+			var yb = (typeof y == 'undefined')?false:true;
+			if(xb){
+				if(x < 0 || x > b.width){
+					x = b.x + ((b.width/2)-(800/2));
+				}
+			}
+			else{
+				x = b.x + ((b.width/2)-(800/2));
+			}
+			if(yb){
+				if(y < 0 || y > b.height){
+					y = b.y + ((b.height/2)-(600/2));
+				}
+			}
+			else{
+				y = b.y + ((b.height/2)-(600/2));
+			}
+			if(x != window.state['selfX'] || y != window.state['selfY']) {
+				window.state['selfX'] = x;
+				window.state['selfY'] = y;
+				saveState();
+			}
+		
+		
+			window.nativeWindow.x = window.state['selfX'];
+			window.nativeWindow.y = window.state['selfY'];
+			window.nativeWindow.width = window.state['selfWidth'];
+			window.nativeWindow.height = window.state['selfHeight'];
+		
+			window.nativeWindow.visible = true;
+			window.nativeWindow.activate();
+		
+			window.onresize = function(e) { setSelfState(window.nativeWindow.x,window.nativeWindow.y,window.nativeWindow.width,window.nativeWindow.height); }
+			window.nativeWindow.addEventListener('move', function(){ setSelfState(window.nativeWindow.x,window.nativeWindow.y,window.nativeWindow.width,window.nativeWindow.height); } , false);
+		
+			if(window.state['postUrl']) document.getElementById('postUrl').value = window.state['postUrl'];
+			if(window.state['postRaw']) document.getElementById('postRaw').value = window.state['postRaw'];
+		}
+		
+		document.onkeydown=function(e){if((e.ctrlKey && e.keyCode == 69)/* || (e.ctrlKey && e.keyCode == 88)*/){ clearOrInit(); e.preventDefault(); return false; } if(e.keyCode == 27) {if(window.curSelectedRow !== null) { window.curSelectedRow.className = window.curSelectedRow.className.replace(/ selectedRow/g,''); } window.curSelectedRow = null;} if(e.ctrlKey && e.keyCode == 70) { find2show(); }}
+		
+		if(air.NetworkInfo)
+		{
+			var address = [];
+			var netInterfaces = air.NetworkInfo.networkInfo.findInterfaces();
+			if(netInterfaces.length && netInterfaces.length > 0) {
+				for(var interfaceeIndex = 0; interfaceeIndex < netInterfaces.length; interfaceeIndex++) {
+					if(netInterfaces[interfaceeIndex].active) {
+						for(var addressIndex = 0; addressIndex < netInterfaces[interfaceeIndex].addresses.length; addressIndex++) {
+							if(typeof netInterfaces[interfaceeIndex].addresses[addressIndex].address == 'string')
+								address.push(netInterfaces[interfaceeIndex].addresses[addressIndex].address);
+						}
+					}
+				}
+			}
+			
+			var userIp;
+			userIp = address[0];
+			if(userIp.indexOf('192.') == -1 && userIp.indexOf('172.') == -1) {
+				if(address[1]) {
+					userIp = address[1];
+					if(userIp.indexOf('192.') == -1 && userIp.indexOf('172.') == -1 && userIp.indexOf('127.') == -1) {
+						if(address[2]) {
+							userIp = address[2];
+							if(userIp.indexOf('192.') == -1 && userIp.indexOf('172.') == -1 && userIp.indexOf('127.') == -1) {
+								if(address[3]) {
+									userIp = address[3];
+								}
+							}
+						}
+					}
+				}
+			}
+			document.getElementById('localIP').value = userIp;
+			document.getElementById('introip').innerHTML = userIp;
+			document.getElementById('localPort').value = '62538';
+		}
+		else
+		{
+			setTimeout(function(){
+				document.getElementById('into').style.display='none';
+				document.getElementById('jtbox').style.display='block';
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'trace', 'trace');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'debug', 'debug');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'info', 'info');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'warn');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'error', 'error');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "INSERT INTO tblUsers SET sUid = 123", 'sql insert:', 'warn', 'mysql');
+				dataIn(1982445707, "1");
+				dataIn(1982445707, "2");
+				dataIn(1982445707, "3");
+				dataIn(1982445707, "GET -> kv:1", 'redis get:', 'warn', 'redis');
+				dataIn(100002845459110, "GET -> kv:1", 'redis get:', 'warn', 'redis');
+				dataIn(100002845459110, "SET -> m1_name pjf", 'memcache set:', 'warn', 'memcache');
+			}, 500)
+			
+			setTimeout(function(){
+				dataIn(1982445707, {a:11111111, b:2222222}, 'U:', 'warn', 'last');
+				dataIn(100002845459110, "an error occured", 'sys error:', 'error', 'last');
+			}, 10000)
+		}
+	}
+	</script>
+</head>
+<body>
+	<div id="header">
+		<div class="container">
+			<span id="logo"><a title="PJF Monster Debugger" href="javascript:;"><img alt="PJF Monster Debugger" title="PJF Monster Debugger" src="app/icon/1_Desktop_Icons/icon_128.png"></a></span>
+			<ul id="navigation">
+				<!-- <li class="active"><a href="javascript:;">1982445707</a></li> -->
+			</ul>
+		</div>
+	</div>
+	<div id="into" class="into">
+	&nbsp;&nbsp;&nbsp;&nbsp;Thank you for using PJF Monster Debugger. It's a simple JSON trace tool. By deafult, it will start a socket server at <span id="introip"></span>:62538, then you can use any socket client to send json data to your server. Make sure do not let your firewall block the connection.<br /><br />
+	<br>
+	local IP: <input type="text" value="" id="localIP" /> <br><br>
+	local Port: <input type="text" value="" id="localPort" /> <br><br>
+	<span style="display:none" id="logfielddiv">logField: <textarea style="width:800px;height:560px;" id="logField"></textarea> <br><br></span>
+	<button class="btn" onclick='startServer(this)'>Start Server</button>
+	
+	</div>
+	<div class="featuresNav">
+		<ul id="tag-tabs"></ul>
+	</div>
+	<div id="jtbox" style="display:none;text-align:center;width:99.9%;margin:8px auto;overflow-x:hidden;overflow-y:scroll;position:absolute;top:125px;bottom:35px;">
+		<textarea id="jsonsTable-init-value" style="display:none;">
+			<tr>
+				<th class="id">ID</th>
+				<th class="label">Label</th>
+				<th class="detail">Detail</th>
+				<th class="tag">Tag</th>
+			</tr>
+		</textarea>
+		<table id="jsonsTable" class="jsons-table">
+			<!-- 
+			<tr>
+				<th class="id">ID</th>
+				<th class="label">Label</th>
+				<th class="detail">Detail</th>
+				<th class="tag">Tag</th>
+			</tr>
+			<tr>
+				<td class="id">12345</td>
+				<td class="label">User123:</td>
+				<td class="detail"><textarea readonly>[{1:null}, false, null, 'null', 0, '', undefined, [], [[]], [{a: 'b'}], {}]</textarea></td>
+				<td class="tag">Trace</td>
+			</tr>
+			<tr>
+				<td class="id">12345</td>
+				<td class="label">User123:</td>
+				<td class="detail"><textarea readonly>[{1:null}, false, null, 'null', 0, '', undefined, [], [[]], [{a: 'b'}], {}]</textarea></td>
+				<td class="tag">Trace</td>
+			</tr>
+			-->
+		</table>
+	</div>
+	</div>
+	<div style="clear:both;height:150px;"></div>
+	<div class="podbar">
+		<div class="info">PJF Monster Debugger(A JSON Trace Tool) Version 0.1</div>
+		<div class="execPost">
+			<table style="width:100%;">
+				<tr>
+					<td style="width:40%;"><input value="http://xxx.xxx.com" id="postUrl" type="text" value="" placeholder="Enter a url" style="width:100%;" /></td>
+					<td style="width:40%;"><input id="postRaw" type="text" value="" placeholder="Enter post raw" style="width:100%;" /></td>
+					<td style="width:20%;">&nbsp;ShowResponse:<input id="postShowReponse" type="checkbox" checked />&nbsp;&nbsp;&nbsp;&nbsp;<button id="postBtn" class="btn" style="height:30px;line-height:30px;padding:0 5px;">GET/POST</button></td>
+				</tr>
+			</table>
+		</div>
+	</div>
+</body>
+</html>

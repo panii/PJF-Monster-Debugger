@@ -1,0 +1,39 @@
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<title>Dump Window</title>
+	<script type="text/javascript" src="dump.js"></script>
+	<script type="text/javascript">var find2Selector = ['td[rel="tRow(this)"]', 'td[rel="td_value"]'];var find2from;</script>
+	<script type="text/javascript" src="find2.js"></script>
+	<script type="text/javascript">
+	//                    潘
+	function tRow(s) {var t = s.parentNode.lastChild;tTarget(t, tSource(s));}
+	function tTable(s) {var switchToState = tSource(s) ;var table = s.parentNode.parentNode;
+		for (var i = 1; i < table.childNodes.length; i++) {t = table.childNodes[i] ;if (t.style) {tTarget(t, switchToState);}}
+	}
+	function tSource(s) {
+		if (s.style.fontStyle == "italic" || s.style.fontStyle == null) {
+			s.style.fontStyle = "normal";s.title = "click to collapse";return "open";} 
+		else {s.style.fontStyle = "italic";s.title = "click to expand";return "closed";}
+	}
+	function tTarget (t, switchToState) {if (switchToState == "open") {t.style.display = "";} else {t.style.display = "none";}}
+	
+	window.onload = function(){
+		find2from = document.body;
+		
+	}
+	function dumpF(what, showType)
+	{
+		if(window.opener) {
+			window.onresize = function(e) { window.opener.setDumpWindowState(window.nativeWindow.x,window.nativeWindow.y,window.nativeWindow.width,window.nativeWindow.height); }
+			window.nativeWindow.addEventListener('move', function(){ window.opener.setDumpWindowState(window.nativeWindow.x,window.nativeWindow.y,window.nativeWindow.width,window.nativeWindow.height); } , false);
+			document.onkeydown=function(e){if(e.keyCode == 27) window.close();  if(e.ctrlKey && e.keyCode == 70) { find2show(); } /*e.preventDefault();*/}
+		}
+		dump(what, showType);
+	}
+</script>
+</head>
+<body>
+<div id="mytrace"></div>
+</body>
+</html>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<application xmlns="http://ns.adobe.com/air/application/3.8">
+	<id>com.pjf.pjfmonsterdebugger</id>
+	<versionNumber>0.1</versionNumber>
+	<filename>PJF-Monster-Debugger</filename>
+	<name>PJF-Monster-Debugger</name> 
+	<initialWindow>
+		<title>PJF-Monster-Debugger(A JSON Trace Tool)</title>
+		<content>pjfmonsterdebugger.html</content>
+		<visible>false</visible>
+		<width>800</width>
+		<height>600</height>
+	</initialWindow>
+	<installFolder>PJF-Monster-Debugger</installFolder>
+	<programMenuFolder>PJF-Monster-Debugger</programMenuFolder>
+	<icon>
+		<image16x16>app/icon/1_Desktop_Icons/icon_016.png</image16x16>
+		<image32x32>app/icon/1_Desktop_Icons/icon_032.png</image32x32>
+		<image48x48>app/icon/1_Desktop_Icons/icon_048.png</image48x48>
+		<image128x128>app/icon/1_Desktop_Icons/icon_128.png</image128x128>
+		<!--<image256x256>app/icon/1_Desktop_Icons/icon_256.png</image256x256>-->
+		<!--<image512x512>app/icon/1_Desktop_Icons/icon_512.png</image512x512>-->
+	</icon>
+</application>
