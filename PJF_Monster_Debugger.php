@@ -1,4 +1,8 @@
 <?php
+function trace($unique_id = null, $trace_thing = null, $label = '&nbsp;', $level = 'Trace', $tag = 'All') {
+	PJF_Monster_Debugger::trace($unique_id, $trace_thing, $label, $level, $tag);
+}
+
 class PJF_Monster_Debugger
 {
 	public static $config = array(
@@ -60,10 +64,6 @@ class PJF_Monster_Debugger
 		foreach(self::$handles as &$uniqueS) foreach($uniqueS as &$s) {if($s !== null) {fclose($s); $s = null;}}
 	}
 }
-
-function pjf_trace($unique_id = null, $trace_thing = null, $label = '&nbsp;', $level = 'Trace', $tag = 'All') { PJF_Monster_Debugger::trace($unique_id, $trace_thing, $label, $level, $tag); }
-
-function trace($trace_thing = null, $label = '&nbsp;', $level = 'Trace', $tag = 'All') { pjf_trace(CONST_UNIQUE_ID, $trace_thing, $label, $level, $tag); }
 
 function PJF_Monster_Debugger_Shutdown() { PJF_Monster_Debugger::shutdown(); }
 
