@@ -57,7 +57,7 @@ function dataIn(uniqueId, json, label, level, tag)
 {
 	// return;
 	if(!uniqueId) return;
-	if(!json) return;
+	if(typeof json == 'undefined') return;
 	if(!tag || tag == '') tag = 'All';
 	if(!level || level == '') level = 'Trace';
 	if(!label || label == '') label = '&nbsp;';
