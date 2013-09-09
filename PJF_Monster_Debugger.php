@@ -14,10 +14,11 @@ class PJF_Monster_Debugger
 
 	private static $handles = array();
 
-	public static function trace($unique_id = null, $trace_thing = null, $label = '&nbsp;', $level = 'Trace', $tag = 'All')
+	public static function trace($unique_id = null, $trace_thing, $label = '&nbsp;', $level = 'Trace', $tag = 'All')
 	{
-		if($unique_id !== null && $trace_thing !== null) {
+		if($unique_id !== null) {
 			if(isset(self::$config[$unique_id])) {
+
 				$olderrorhandler = set_error_handler('PJF_error_handler');
 
 				foreach(self::$config[$unique_id] as $server) {

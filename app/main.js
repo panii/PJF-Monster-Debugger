@@ -305,17 +305,19 @@ function jsonsTableClick(e)
 }
 
 var postID = 0;
-function postBtnClick(e)
+function postBtnClick(clickEvent)
 {
 	document.getElementById('postBtn').style.visibility = 'hidden';
 	var loader = new air.URLLoader();
 	loader.addEventListener(air.Event.COMPLETE, function(e/* :Event */) {
-		if(document.getElementById('postShowReponse').checked) window.dumpF(0, ++postID, postID, postID, '<textarea style="width:100%;height:100%;">'+e.target.data.replace(/\<textarea\>/g, "&lt;textarea&gt;").replace(/\<\/textarea\>/g, "&lt;/textarea&gt;") + '</textarea>');
+		if(document.getElementById('postShowReponse').checked && clickEvent) window.dumpF(0, ++postID, postID, postID, '<textarea style="width:100%;height:100%;">'+e.target.data.replace(/\<textarea\>/g, "&lt;textarea&gt;").replace(/\<\/textarea\>/g, "&lt;/textarea&gt;") + '</textarea>');
 		document.getElementById('postBtn').style.visibility = 'visible';
 	});
-	loader.addEventListener(air.HTTPStatusEvent.HTTP_STATUS, function(e/* :HTTPStatusEvent */) {
-		if(document.getElementById('postShowReponse').checked) alert('status: ' + e.status);
-	});
+	if(clickEvent) {
+		loader.addEventListener(air.HTTPStatusEvent.HTTP_STATUS, function(e/* :HTTPStatusEvent */) {
+			if(document.getElementById('postShowReponse').checked) alert('status: ' + e.status);
+		});
+	}
 	loader.addEventListener(air.IOErrorEvent.IO_ERROR, function(e/* :IOErrorEvent */) {
 		alert('io error');
 		alert(e.text);

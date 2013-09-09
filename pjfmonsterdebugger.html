@@ -147,7 +147,30 @@
 			if(window.state['postRaw']) document.getElementById('postRaw').value = window.state['postRaw'];
 		}
 		
-		document.onkeydown=function(e){if((e.ctrlKey && e.keyCode == 69)/* || (e.ctrlKey && e.keyCode == 88)*/){ clearOrInit(); e.preventDefault(); return false; } if(e.keyCode == 27) {if(window.curSelectedRow !== null) { window.curSelectedRow.className = window.curSelectedRow.className.replace(/ selectedRow/g,''); } window.curSelectedRow = null;} if(e.ctrlKey && e.keyCode == 70) { find2show(); }}
+		document.onkeydown=function(e){
+			if(e.keyCode == 116/*f5*/) {
+				postBtnClick(null);
+				e.preventDefault();
+				return false; 
+			}
+			else if(e.keyCode == 115/*f4*/) {
+				postBtnClick(true);
+				e.preventDefault();
+				return false; 
+			}
+			else if((e.ctrlKey && e.keyCode == 69)/* || (e.ctrlKey && e.keyCode == 88)*/){ 
+				clearOrInit();
+				e.preventDefault();
+				return false; 
+			} 
+			else if(e.keyCode == 27) {
+				if(window.curSelectedRow !== null) {
+					window.curSelectedRow.className = window.curSelectedRow.className.replace(/ selectedRow/g,'');
+				}
+				window.curSelectedRow = null;
+			} 
+			else if(e.ctrlKey && e.keyCode == 70) { find2show(); }
+		}
 		
 		if(air.NetworkInfo)
 		{
