@@ -50,10 +50,18 @@ var ServerSocketClass = {
 			ServerSocketClass.log( 'onClientSocketData:' + funcname + ':' + packet_len + ':' + s );
 			return;
 		}
-		
+		var oo;
 		try {
-			var oo = JSON.parse(s);
-		} catch( e ) { alert('parse json error'); alert(s); return; }
+			oo = JSON.parse(s.toString());
+		} catch( e ) { 
+			alert('parse json error, s len:' + s.length);
+			alert('funcname:' + funcname);
+			alert('packet_len:' + packet_len);
+			document.body.innerHTML = '<textarea style="width:500px;height:500px;" id="errtxtjson"></textarea>';
+			document.getElementById('errtxtjson').value=s;
+			//for(var iinna in e){alert(iinna + ":");alert(e[iinna]);}
+			return;
+		}
 		var o = oo;
 		if(ServerSocketClass.clientStarted[socketId] === 0) {
 			dataStart(o['unique_id'], socketId);
