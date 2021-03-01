@@ -305,35 +305,58 @@ function jsonsTableClick(e)
 }
 
 var postID = 0;
-function postBtnClick(clickEvent)
+function getBtnClick(showResultBody)
 {
+    window.lastBtnFunc = function(showResultBody) { doGetOrPost(showResultBody, 'GET'); }
+    doGetOrPost(showResultBody, 'GET');
+}
+function postBtnClick(showResultBody)
+{
+    window.lastBtnFunc = function(showResultBody) { doGetOrPost(showResultBody, 'POST'); }
+    doGetOrPost(showResultBody, 'POST')
+}
+function doGetOrPost(showResultBody, method)
+{
+	document.getElementById('getBtn').style.visibility = 'hidden';
 	document.getElementById('postBtn').style.visibility = 'hidden';
 	var loader = new air.URLLoader();
 	loader.addEventListener(air.Event.COMPLETE, function(e/* :Event */) {
-		if(document.getElementById('postShowReponse').checked && clickEvent) window.dumpF(0, ++postID, postID, postID, '<textarea style="width:100%;height:100%;">'+e.target.data.replace(/\<textarea\>/g, "&lt;textarea&gt;").replace(/\<\/textarea\>/g, "&lt;/textarea&gt;") + '</textarea>');
+		if(showResultBody) {
+            if (e.target.data.substr(0,1) == "{") {
+                window.dumpF(1, ++postID, postID, postID, JSON.parse(e.target.data));
+            } else {
+                window.dumpF(0, ++postID, postID, postID, '<textarea style="width:100%;height:100%;">'+e.target.data.replace(/\<textarea\>/g, "&lt;textarea&gt;").replace(/\<\/textarea\>/g, "&lt;/textarea&gt;") + '</textarea>');
+            }
+        }
+		document.getElementById('getBtn').style.visibility = 'visible';
 		document.getElementById('postBtn').style.visibility = 'visible';
 	});
-	if(clickEvent) {
+	if(showResultBody) {
 		loader.addEventListener(air.HTTPStatusEvent.HTTP_STATUS, function(e/* :HTTPStatusEvent */) {
-			if(document.getElementById('postShowReponse').checked) alert('status: ' + e.status);
+			if(document.getElementById('postShowReponse').checked) {
+                alert('status: ' + e.status);
+            }
 		});
 	}
 	loader.addEventListener(air.IOErrorEvent.IO_ERROR, function(e/* :IOErrorEvent */) {
 		alert('io error');
 		alert(e.text);
+		document.getElementById('getBtn').style.visibility = 'visible';
 		document.getElementById('postBtn').style.visibility = 'visible';
 	});
 	var request = new air.URLRequest(document.getElementById('postUrl').value);
-	if(document.getElementById('postRaw').value) {
-		request.method = air.URLRequestMethod.POST;
-		request.contentType = "application/x-www-form-urlencoded";
+	if (document.getElementById('postRaw').value && method == "POST") {
+		request.contentType = "application/json";
 		var byteArray = new air.ByteArray();
 		byteArray.writeUTFBytes(document.getElementById('postRaw').value);
 		request.data = byteArray;
 	}
-	else {
-		request.method = air.URLRequestMethod.GET;
-	}
+    if (method == "GET") {
+        request.method = air.URLRequestMethod.GET;
+    }
+    if (method == "POST") {
+        request.method = air.URLRequestMethod.POST;
+    }
 	try {
 		loader.load(request);
 		window.state['postUrl'] = document.getElementById('postUrl').value;

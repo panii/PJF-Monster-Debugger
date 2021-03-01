@@ -17,6 +17,7 @@
 		'postUrl' : '', 'postRaw' : ''
 	}
 	var stateFile = 'pjfmonsterdebuggerstatefile';
+    var lastBtnFunc = null;
 	
 	if(air.Loader)
 	{
@@ -100,6 +101,7 @@
 		window.jsonsTable.addEventListener('dblclick', jsonsTableDblClick, false);
 		window.jsonsTable.addEventListener('click', jsonsTableClick, false);
 		
+		document.getElementById('getBtn').addEventListener('click', getBtnClick, false);
 		document.getElementById('postBtn').addEventListener('click', postBtnClick, false);
 		
 		window.state = readState();
@@ -146,15 +148,22 @@
 			if(window.state['postUrl']) document.getElementById('postUrl').value = window.state['postUrl'];
 			if(window.state['postRaw']) document.getElementById('postRaw').value = window.state['postRaw'];
 		}
-		
 		document.onkeydown=function(e){
 			if(e.keyCode == 116/*f5*/) {
-				postBtnClick(null);
+                if (window.lastBtnFunc == null) {
+                    alert("please click a btn first!");
+                    return false;
+                }
+				window.lastBtnFunc(null);
 				e.preventDefault();
 				return false; 
 			}
 			else if(e.keyCode == 115/*f4*/) {
-				postBtnClick(true);
+                if (window.lastBtnFunc == null) {
+                    alert("please click a btn first!");
+                    return false;
+                }
+				window.lastBtnFunc(true);
 				e.preventDefault();
 				return false; 
 			}
@@ -284,7 +293,7 @@
 		</div>
 	</div>
 	<div id="into" class="into">
-	&nbsp;&nbsp;&nbsp;&nbsp;Thank you for using PJF Monster Debugger. It's a simple JSON trace tool. By deafult, it will start a socket server at <span id="introip"></span>:62538, then you can use any socket client to send json data to your server. Make sure do not let your firewall block the connection.<br /><br />
+	&nbsp;&nbsp;&nbsp;&nbsp;Thank you for using PJF Monster Debugger. It's a simple JSON trace tool. By default, it will start a socket server at <span id="introip"></span>:62538, then you can use any socket client to send json data to your server. Make sure do not let your firewall block the connection.<br /><br />
 	<br>
 	local IP: <input type="text" value="" id="localIP" /> <br><br>
 	local Port: <input type="text" value="" id="localPort" /> <br><br>
@@ -336,7 +345,7 @@
 				<tr>
 					<td style="width:40%;"><input value="http://www.baidu.com" id="postUrl" type="text" value="" placeholder="Enter a url" style="width:100%;" /></td>
 					<td style="width:40%;"><input id="postRaw" type="text" value="" placeholder="Enter post raw" style="width:100%;" /></td>
-					<td style="width:20%;">&nbsp;ShowResponse:<input id="postShowReponse" type="checkbox" checked />&nbsp;&nbsp;&nbsp;&nbsp;<button id="postBtn" class="btn" style="height:30px;line-height:30px;padding:0 5px;">GET/POST</button></td>
+					<td style="width:20%;">&nbsp;ShowResponse:<input id="postShowReponse" type="checkbox" checked />&nbsp;&nbsp;&nbsp;&nbsp;<button id="getBtn" class="btn" style="height:30px;line-height:30px;padding:0 5px;">GET</button><button id="postBtn" class="btn" style="height:30px;line-height:30px;padding:0 5px;">POST</button></td>
 				</tr>
 			</table>
 		</div>
